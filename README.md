@@ -11,6 +11,4 @@ You should have received a copy of the GNU General Public License along with thi
 Python based controller for driving Spherebot Eggbot clone.  It can be used to send the GCode to the 'bot or jog it via jog controls.
 
 
-Required modules:
-wx
-pySerial 
+Required modules: wx, pySerial 
