@@ -8,12 +8,14 @@ import  wx.lib.newevent
 terminator = '\r\n'
 
 
-comEvent = wx.NewEventType()
-EVT_COM = wx.PyEventBinder(comEvent, 1)
+
 
 
 updateEvent, EVT_UPDATE = wx.lib.newevent.NewEvent()
 doneEvent, EVT_DONE = wx.lib.newevent.NewEvent()
+penChangeEvent, EVT_PENCHANGE = wx.lib.newevent.NewEvent()
+comEvent, EVT_COM = wx.lib.newevent.NewEvent()
+
 
 
 class Sender (threading.Thread):
@@ -77,8 +79,7 @@ class Sender (threading.Thread):
 
 		for line in lines :
 			try :
-				while self.pauseFlag :
-					pass
+				
 					
 				self.line = line
 				
@@ -86,7 +87,19 @@ class Sender (threading.Thread):
 					print 'Line Read from file: ', self.line
 				
 				if not self.keepAlive :
-					break
+					line.counter = 0
+					break					
+				
+		
+				if 'M01' in self.line :
+					gcode, text = line.split('(')
+					text = text.strip(')')
+					self.pauseFlag = True
+					evt = penChangeEvent(attr1=text)
+					wx.PostEvent(self.parent, evt)
+					
+				while self.pauseFlag :
+					pass
 				
 				if '(' in self.line or ')' in self.line :
 					self.line = self.strip(self.line)
@@ -155,6 +168,7 @@ class GUI (senderGUI.mainFrame):
 		self.fileName = ''
 		self.contents = ''
 		self.Bind(EVT_UPDATE, self.onUpdate)
+		self.Bind(EVT_PENCHANGE, self.onPenChange)		
 		self.ports = self.findPorts()
 		self.updatePorts(self.ports)
 		self.penPosition_Label.SetLabel(str(self.sender.servoPosition))
@@ -249,6 +263,12 @@ class GUI (senderGUI.mainFrame):
 		self.sender.openPort(port, baud)
 		print self.sender.port
 		self.sender.moveServo(self.sender.servoPosition)	
+
+	def onPenChange(self, event) :
+		dlgText = event.attr1 	 + "\nInsert correct pen and press 'OK' to continue"		
+		dlg = wx.MessageDialog(None, dlgText, 'Pen Change!', wx.OK)
+		dlg.ShowModal()
+		self.sender.pauseFlag = False
 
 		
 	def onPenPlus(self, event) :
