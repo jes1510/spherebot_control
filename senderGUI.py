@@ -216,21 +216,21 @@ class mainFrame ( wx.Frame ):
 		fileOpsSizer.Add( self.run_Button, 0, wx.ALL, 5 )
 		
 		
-		fileOpsSizer.AddSpacer( ( 25, 0), 0, wx.EXPAND, 5 )
+		fileOpsSizer.AddSpacer( ( 0, 0), 1, wx.EXPAND, 5 )
 		
 		self.pause_Button = wx.ToggleButton( self.masterPanel, wx.ID_ANY, u"Pause", wx.DefaultPosition, wx.DefaultSize, 0 )
 		fileOpsSizer.Add( self.pause_Button, 0, wx.ALL, 5 )
 		
 		
-		fileOpsSizer.AddSpacer( ( 25, 0), 0, wx.EXPAND, 5 )
+		fileOpsSizer.AddSpacer( ( 0, 0), 1, wx.EXPAND, 5 )
 		
 		self.stop_Button = wx.Button( self.masterPanel, wx.ID_ANY, u"Stop", wx.DefaultPosition, wx.DefaultSize, 0 )
 		fileOpsSizer.Add( self.stop_Button, 0, wx.ALL, 5 )
 		
 		
-		fileOpsSizer.AddSpacer( ( 50, 0), 0, wx.EXPAND, 5 )
+		panelSizer.Add( fileOpsSizer, 0, wx.EXPAND, 5 )
 		
-		functionalSizer = wx.BoxSizer( wx.VERTICAL )
+		functionalSizer = wx.BoxSizer( wx.HORIZONTAL )
 		
 		self.servoOff_Checkbox = wx.CheckBox( self.masterPanel, wx.ID_ANY, u"Suppress Servo Off", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.servoOff_Checkbox.SetValue(True) 
@@ -240,11 +240,12 @@ class mainFrame ( wx.Frame ):
 		self.doPenChange_Checkbox.SetValue(True) 
 		functionalSizer.Add( self.doPenChange_Checkbox, 0, wx.ALIGN_LEFT|wx.ALL, 5 )
 		
+		self.colorize_Checkbox = wx.CheckBox( self.masterPanel, wx.ID_ANY, u"Colorize text (slower print)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.colorize_Checkbox.SetValue(True) 
+		functionalSizer.Add( self.colorize_Checkbox, 0, wx.ALL, 5 )
 		
-		fileOpsSizer.Add( functionalSizer, 1, wx.ALIGN_LEFT|wx.EXPAND, 5 )
 		
-		
-		panelSizer.Add( fileOpsSizer, 0, wx.EXPAND, 5 )
+		panelSizer.Add( functionalSizer, 0, wx.ALIGN_LEFT|wx.EXPAND, 5 )
 		
 		textBoxSizer = wx.BoxSizer( wx.VERTICAL )
 		

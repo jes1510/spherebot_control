@@ -9,14 +9,14 @@ terminator = '\r\n'
 
 
 
-
+doColor = True
 
 updateEvent, EVT_UPDATE = wx.lib.newevent.NewEvent()
 doneEvent, EVT_DONE = wx.lib.newevent.NewEvent()
 penChangeEvent, EVT_PENCHANGE = wx.lib.newevent.NewEvent()
 comEvent, EVT_COM = wx.lib.newevent.NewEvent()
 
-
+buff = []		# List of lines
 
 class Sender (threading.Thread):
 	def __init__(self, parent) :
@@ -26,6 +26,7 @@ class Sender (threading.Thread):
 			
 		except :
 			pass
+			
 		self.data = ''
 		self.line = ''
 		self.baudRates = [300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200]
@@ -65,7 +66,8 @@ class Sender (threading.Thread):
 		time.sleep(1)
 		self.port.flushInput()
 		
-	def run(self) :			
+	def run(self) :	
+		global buff		
 		totalLines = self.parent.richText.GetNumberOfLines()
 		
 		text = self.parent.richText.GetValue()
@@ -79,8 +81,7 @@ class Sender (threading.Thread):
 			print "Started sender thread..."
 
 		for line in lines :
-			try :
-				
+			try :			
 					
 				self.line = line
 				
@@ -99,8 +100,10 @@ class Sender (threading.Thread):
 					evt = penChangeEvent(attr1=msgText)
 					wx.PostEvent(self.parent, evt)
 					
+					
 				while self.pauseFlag :
-					pass
+					time.sleep(.1)
+					
 				
 				if '(' in self.line or ')' in self.line :
 					self.line = self.strip(self.line)
@@ -118,11 +121,11 @@ class Sender (threading.Thread):
 						print 'Skipping empty line'
 						
 					else :
-						pass
-
-				evt = updateEvent(attr1=self.line)
-				wx.PostEvent(self.parent, evt)
-					
+						pass			
+				
+				if  self.parent.colorize_Checkbox.GetValue() == True : time.sleep(0.1)
+				evt = updateEvent(attr1=line)
+				wx.PostEvent(self.parent, evt)					
 				
 			except Exception, detail:
 				print detail
@@ -175,6 +178,52 @@ class GUI (senderGUI.mainFrame):
 		self.penPosition_Label.SetLabel(str(self.sender.servoPosition))
 		self.counter = 1
 		self.thread = threading.Thread()
+		
+		TIMER_ID = 100  
+		self.timer = wx.Timer(self, TIMER_ID)  
+		
+		wx.EVT_TIMER(self, TIMER_ID, self.onTimer)  
+		self.Bind(wx.EVT_CLOSE, self.onClose)
+		
+	# I may get rid of this, the thread is a daemon so a clean exit isn't really needed
+	def onClose(self, event) :
+		self.sender.keepAlive = False
+		try :
+			self.sender.port.close()
+		except :
+			pass
+		
+		try :
+			self.f.close()
+		except :
+			pass	
+		
+		self.Destroy()
+			
+	
+	def onTimer(self, event) :		
+		global doColor
+		global buff
+		for i in range(0, len(buff)) :
+			line = buff.pop(0)			
+			if '(' in line and doColor:	
+				line += '\n'
+				for letter in line :
+					if letter == '(' :
+						print 'Start..'
+						self.richText.BeginTextColour(wx.BLUE)
+					if letter == ')' :
+						print 'Stop!'
+						self.richText.EndTextColour()	
+					print letter	
+													
+					self.richText.WriteText(letter) 	
+			else :				
+				self.richText.AppendText(line + '\n')
+			
+		self.richText.ShowPosition(self.richText.GetLastPosition ())		
+		self.counter += 1
+		
 
 	def onClear (self, event) :
 		self.richText.Clear()
@@ -219,15 +268,41 @@ class GUI (senderGUI.mainFrame):
 		pass	
         
 	def onUpdate(self, event)	:
-		self.richText.AppendText(event.attr1 + '\n')
-		self.richText.ShowPosition(self.richText.GetLastPosition ())
+		event.attr1 += '\n'
+		killColor = False
+		
+		if self.colorize_Checkbox.GetValue() == True :
+			if '(' in event.attr1 :
+				for letter in event.attr1 :
+					if letter == '(' :										
+						self.richText.BeginTextColour(wx.BLUE)	
+						killColor = False				
+							
+					elif letter == ')' :		
+						killColor = True	
+						
+					self.richText.WriteText(letter) 			
+					if killColor :
+						self.richText.EndTextColour()	
+						killColor = False								
+						
+			if 'G1' in event.attr1 :
+				self.richText.BeginTextColour(wx.GREEN)	
+				self.richText.WriteText(event.attr1) 
+				self.richText.EndTextColour()			
+			
+				
+		else :	
+			self.richText.AppendText(event.attr1)
+			
+		self.richText.ShowPosition(self.richText.GetLastPosition ())		
 		self.counter += 1
 		
 	def onFileSelection(self, event) :
 		self.richText.Clear()
 		self.fileName = self.filePicker.GetPath()
-		f = open(self.fileName, 'r')
-		self.contents = f.readlines()
+		self.f = open(self.fileName, 'r')
+		self.contents = self.f.readlines()
 		for line in self.contents :		
 			self.richText.AppendText(line)
 			
@@ -250,12 +325,17 @@ class GUI (senderGUI.mainFrame):
 			
 		self.sender.keepAlive = True				
 		self.thread = threading.Thread(target=self.sender)
-		self.thread.setDaemon(True)
-		self.thread = self.sender.start()			
+		#self.thread.daemon = True
+		self.thread = self.sender.start()	
+		#self.timer.Start(50)  # x100 milliseconds		
 
 		
 	def onStop(self, event) :
 		self.sender.keepAlive = False
+		self.timer.Stop()
+		self.pause_Button.SetValue(False)
+		self.run_Button.Enable(True) 
+		
 		
 	def onSerPortOpen(self, event) :
 
