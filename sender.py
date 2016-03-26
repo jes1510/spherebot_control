@@ -36,6 +36,7 @@ class Sender (threading.Thread):
 		self.servoPosition = 15		
 		self.running = False
 		self.verbosity = 1
+	
 
 	def isRunning(self) :
 		return self.running
@@ -87,15 +88,15 @@ class Sender (threading.Thread):
 					print 'Line Read from file: ', self.line
 				
 				if not self.keepAlive :
-					line.counter = 0
+					linecounter = 0
 					break					
 				
 		
-				if 'M01' in self.line :
-					gcode, text = line.split('(')
-					text = text.strip(')')
+				if 'M01' in self.line and (self.parent.doPenChange_Checkbox.GetValue() == True):
+					gcode, msgText = line.split('(')
+					msgText = msgText.strip(')')
 					self.pauseFlag = True
-					evt = penChangeEvent(attr1=text)
+					evt = penChangeEvent(attr1=msgText)
 					wx.PostEvent(self.parent, evt)
 					
 				while self.pauseFlag :
@@ -220,7 +221,7 @@ class GUI (senderGUI.mainFrame):
 	def onUpdate(self, event)	:
 		self.richText.AppendText(event.attr1 + '\n')
 		self.richText.ShowPosition(self.richText.GetLastPosition ())
-		self.counter +=1
+		self.counter += 1
 		
 	def onFileSelection(self, event) :
 		self.richText.Clear()
@@ -285,7 +286,12 @@ class GUI (senderGUI.mainFrame):
 		self.penPosition_Label.SetLabel(str(self.sender.servoPosition))
 
 	def onPause(self, event) :
-		self.sender.pauseFlag = True
+		if self.pause_Button.GetValue() == True :
+			self.sender.pauseFlag = True
+		
+		else :
+			self.sender.pauseFlag = False
+			#self.run_Button.Enable(True) 
 		
 	def onAngleRight(self, event) :
 		self.sender.moveAngle(float(self.angleMM_TextCtrl.GetValue()) )

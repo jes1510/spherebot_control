@@ -212,20 +212,17 @@ class mainFrame ( wx.Frame ):
 		
 		fileOpsSizer = wx.BoxSizer( wx.HORIZONTAL )
 		
-		
-		fileOpsSizer.AddSpacer( ( 0, 0), 1, wx.EXPAND, 5 )
-		
 		self.run_Button = wx.Button( self.masterPanel, wx.ID_ANY, u"Run", wx.DefaultPosition, wx.DefaultSize, 0 )
 		fileOpsSizer.Add( self.run_Button, 0, wx.ALL, 5 )
 		
 		
-		fileOpsSizer.AddSpacer( ( 0, 0), 1, wx.EXPAND, 5 )
+		fileOpsSizer.AddSpacer( ( 25, 0), 0, wx.EXPAND, 5 )
 		
-		self.pause_Button = wx.Button( self.masterPanel, wx.ID_ANY, u"Pause", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.pause_Button = wx.ToggleButton( self.masterPanel, wx.ID_ANY, u"Pause", wx.DefaultPosition, wx.DefaultSize, 0 )
 		fileOpsSizer.Add( self.pause_Button, 0, wx.ALL, 5 )
 		
 		
-		fileOpsSizer.AddSpacer( ( 0, 0), 1, wx.EXPAND, 5 )
+		fileOpsSizer.AddSpacer( ( 25, 0), 0, wx.EXPAND, 5 )
 		
 		self.stop_Button = wx.Button( self.masterPanel, wx.ID_ANY, u"Stop", wx.DefaultPosition, wx.DefaultSize, 0 )
 		fileOpsSizer.Add( self.stop_Button, 0, wx.ALL, 5 )
@@ -233,12 +230,18 @@ class mainFrame ( wx.Frame ):
 		
 		fileOpsSizer.AddSpacer( ( 50, 0), 0, wx.EXPAND, 5 )
 		
+		functionalSizer = wx.BoxSizer( wx.VERTICAL )
+		
 		self.servoOff_Checkbox = wx.CheckBox( self.masterPanel, wx.ID_ANY, u"Suppress Servo Off", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.servoOff_Checkbox.SetValue(True) 
-		fileOpsSizer.Add( self.servoOff_Checkbox, 0, wx.ALL, 5 )
+		functionalSizer.Add( self.servoOff_Checkbox, 0, wx.ALIGN_LEFT|wx.ALL, 5 )
+		
+		self.doPenChange_Checkbox = wx.CheckBox( self.masterPanel, wx.ID_ANY, u"Pen Change on M01", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.doPenChange_Checkbox.SetValue(True) 
+		functionalSizer.Add( self.doPenChange_Checkbox, 0, wx.ALIGN_LEFT|wx.ALL, 5 )
 		
 		
-		fileOpsSizer.AddSpacer( ( 0, 0), 1, wx.EXPAND, 5 )
+		fileOpsSizer.Add( functionalSizer, 1, wx.ALIGN_LEFT|wx.EXPAND, 5 )
 		
 		
 		panelSizer.Add( fileOpsSizer, 0, wx.EXPAND, 5 )
@@ -289,7 +292,7 @@ class mainFrame ( wx.Frame ):
 		self.penMinus_Button.Bind( wx.EVT_BUTTON, self.onPenMinus )
 		self.rotationMinus_Button.Bind( wx.EVT_BUTTON, self.onRotMinus )
 		self.run_Button.Bind( wx.EVT_BUTTON, self.onRun )
-		self.pause_Button.Bind( wx.EVT_BUTTON, self.onPause )
+		self.pause_Button.Bind( wx.EVT_TOGGLEBUTTON, self.onPause )
 		self.stop_Button.Bind( wx.EVT_BUTTON, self.onStop )
 		self.clear_Button.Bind( wx.EVT_BUTTON, self.onClear )
 	
