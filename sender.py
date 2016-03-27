@@ -16,7 +16,6 @@ doneEvent, EVT_DONE = wx.lib.newevent.NewEvent()
 penChangeEvent, EVT_PENCHANGE = wx.lib.newevent.NewEvent()
 comEvent, EVT_COM = wx.lib.newevent.NewEvent()
 
-buff = []		# List of lines
 
 class Sender (threading.Thread):
 	def __init__(self, parent) :
@@ -185,7 +184,7 @@ class GUI (senderGUI.mainFrame):
 		wx.EVT_TIMER(self, TIMER_ID, self.onTimer)  
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		
-	# I may get rid of this, the thread is a daemon so a clean exit isn't really needed
+
 	def onClose(self, event) :
 		self.sender.keepAlive = False
 		try :
@@ -327,7 +326,7 @@ class GUI (senderGUI.mainFrame):
 		self.thread = threading.Thread(target=self.sender)
 		#self.thread.daemon = True
 		self.thread = self.sender.start()	
-		#self.timer.Start(50)  # x100 milliseconds		
+
 
 		
 	def onStop(self, event) :
@@ -371,7 +370,7 @@ class GUI (senderGUI.mainFrame):
 		
 		else :
 			self.sender.pauseFlag = False
-			#self.run_Button.Enable(True) 
+
 		
 	def onAngleRight(self, event) :
 		self.sender.moveAngle(float(self.angleMM_TextCtrl.GetValue()) )
