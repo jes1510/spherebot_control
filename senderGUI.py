@@ -241,7 +241,6 @@ class mainFrame ( wx.Frame ):
 		functionalSizer.Add( self.doPenChange_Checkbox, 0, wx.ALIGN_LEFT|wx.ALL, 5 )
 		
 		self.colorize_Checkbox = wx.CheckBox( self.masterPanel, wx.ID_ANY, u"Colorize text (slower print)", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.colorize_Checkbox.SetValue(True) 
 		functionalSizer.Add( self.colorize_Checkbox, 0, wx.ALL, 5 )
 		
 		

@@ -346,7 +346,7 @@ class GUI (senderGUI.mainFrame):
 
 	def onPenChange(self, event) :
 		dlgText = event.attr1 	 + "\nInsert correct pen and press 'OK' to continue"		
-		dlg = wx.MessageDialog(None, dlgText, 'Pen Change!', wx.OK)
+		dlg = wx.MessageDialog(None, dlgText, 'Pen Change!', wx.OK | wx.ICON_EXCLAMATION)
 		dlg.ShowModal()
 		self.sender.pauseFlag = False
 
