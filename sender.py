@@ -15,6 +15,9 @@ updateEvent, EVT_UPDATE = wx.lib.newevent.NewEvent()
 doneEvent, EVT_DONE = wx.lib.newevent.NewEvent()
 penChangeEvent, EVT_PENCHANGE = wx.lib.newevent.NewEvent()
 comEvent, EVT_COM = wx.lib.newevent.NewEvent()
+errorEvent, EVT_ERROR = wx.lib.newevent.NewEvent()
+
+class  timeoutError(Exception): pass
 
 
 class Sender (threading.Thread):
@@ -36,7 +39,7 @@ class Sender (threading.Thread):
 		self.servoPosition = 15		
 		self.running = False
 		self.verbosity = 1
-	
+		self.timeout = 5 # seconds 
 
 	def isRunning(self) :
 		return self.running
@@ -163,11 +166,17 @@ class Sender (threading.Thread):
 			
 		except Exception, detail : 
 			print "Error writing port: " + str(detail)
+			
 		returned = ''
 		count = 0
+		startTime = time.time()
 		while True :
 			if self.verbosity > 1 :
 				print 'polling :', count
+			
+			if time.time() - startTime  > self.timeout :
+				self.postError("Serial port timeout!")
+				break
 			
 			returned = self.port.readline().strip('\r\n')
 			
@@ -177,6 +186,10 @@ class Sender (threading.Thread):
 				break
 			count += 1
 
+	def postError(self, error) :
+		evt = errorEvent(attr1=error)
+		wx.PostEvent(self.parent, evt)	
+		if self.verbosity > 2 : print "Posting ERROR: " + error
 
 	
 
@@ -186,19 +199,22 @@ class GUI (senderGUI.mainFrame):
 		self.sender = Sender(self)
 		self.fileName = ''
 		self.contents = ''
-		self.Bind(EVT_UPDATE, self.onUpdate)
-		self.Bind(EVT_PENCHANGE, self.onPenChange)		
+		
 		self.ports = self.findPorts()
 		self.updatePorts(self.ports)
 		self.penPosition_Label.SetLabel(str(self.sender.servoPosition))
 		self.counter = 1
 		self.thread = threading.Thread()
+		self.verbosity = 1
 		
 		TIMER_ID = 100  
 		self.timer = wx.Timer(self, TIMER_ID)  
 		
 		wx.EVT_TIMER(self, TIMER_ID, self.onTimer)  
 		self.Bind(wx.EVT_CLOSE, self.onClose)
+		self.Bind(EVT_ERROR, self.onError)
+		self.Bind(EVT_UPDATE, self.onUpdate)
+		self.Bind(EVT_PENCHANGE, self.onPenChange)		
 		
 
 	def onClose(self, event) :
@@ -357,7 +373,7 @@ class GUI (senderGUI.mainFrame):
 		port = self.ports[self.serPort_Choice.GetSelection()]
 		baud = self.sender.baudRates[self.baud_Choice.GetSelection()]
 		self.sender.openPort(port, baud)
-		print self.sender.port
+		if self.verbosity > 3 : print self.sender.port
 		self.sender.moveServo(self.sender.servoPosition)	
 
 	def onPenChange(self, event) :
@@ -400,8 +416,13 @@ class GUI (senderGUI.mainFrame):
 		
 		
 	def onRotMinus(self, event) :
-		self.sender.moveRotation(float(self.rotationMM_TextCtrl.GetValue()))
+		self.sender.moveRotation(float(self.rotationMM_TextCtrl.GetValue()))		
+	
 		
+	def onError(self, event) :		
+		dlg = wx.MessageDialog(None, event.attr1 + '\n', 'ERROR!', wx.OK | wx.ICON_ERROR)
+		dlg.ShowModal()
+	
 	
 
 if __name__ == '__main__':
