@@ -64,6 +64,10 @@ class Sender (threading.Thread):
 		self.port = serial.Serial(port, baud, timeout=0.5)
 		time.sleep(1)
 		self.port.flushInput()
+		time.sleep(.5)
+		if self.verbosity > 0 : print "Port opened and ready!"
+		
+		
 		
 	def run(self) :	
 		global buff		
@@ -91,18 +95,20 @@ class Sender (threading.Thread):
 					linecounter = 0
 					break					
 				
-		
-				if 'M01' in self.line and (self.parent.doPenChange_Checkbox.GetValue() == True):
-					gcode, msgText = line.split('(')
-					msgText = msgText.strip(')')
-					self.pauseFlag = True
-					evt = penChangeEvent(attr1=msgText)
-					wx.PostEvent(self.parent, evt)
+				
+				try :
+					if 'M01' in self.line and (self.parent.doPenChange_Checkbox.GetValue() == True):
+						gcode, msgText = line.split('(')
+						msgText = msgText.strip(')')
+						self.pauseFlag = True
+						evt = penChangeEvent(attr1=msgText)
+						wx.PostEvent(self.parent, evt)
+				except Exception, detail :
+					print "ERROR looking for pen change!\n" + str(detail)
 					
 					
-				while self.pauseFlag :
-					time.sleep(.1)
-					
+				while self.pauseFlag :		# Hang here in sleep until program resumes...
+					time.sleep(.1)					
 				
 				if '(' in self.line or ')' in self.line :
 					self.line = self.strip(self.line)
@@ -112,22 +118,27 @@ class Sender (threading.Thread):
 						print '++++ Removing  Servo off command'
 					self.line = ''
 					
-				if len(self.line) > 1 :	
-					self.send(self.line)
+				try :
+					if len(self.line) > 1 :	
+						if self.verbosity > 2 : print "Sending: " + str(line)
+							
+						self.send(self.line)				
 				
-				else :
-					if self.verbosity > 1 :
-						print 'Skipping empty line'
-						
 					else :
-						pass			
+						if self.verbosity > 1 :
+							print 'Skipping empty line'
+							
+						else :
+							pass			
+				except Exception, detail :
+					print "ERROR sending data: " + str(detail)
 				
 				if  self.parent.colorize_Checkbox.GetValue() == True : time.sleep(0.1)
 				evt = updateEvent(attr1=line)
 				wx.PostEvent(self.parent, evt)					
 				
 			except Exception, detail:
-				print detail
+				print "ERROR! UNHANDLED EXCEPTION: " + str(detail)
 		
 		time.sleep(.1)
 		self.parent.richText.Clear()
@@ -142,11 +153,16 @@ class Sender (threading.Thread):
 		out = regex.sub('', line)
 		return out
 		
-	def send(self, code) :
+	def send(self, code) :	
+		
 		if not terminator in code :
 			code += terminator
-
-		self.port.write(code)
+		try :
+			if self.verbosity > 2 : print "+++ sending to port ---->" + code
+			self.port.write(str(code))
+			
+		except Exception, detail : 
+			print "Error writing port: " + str(detail)
 		returned = ''
 		count = 0
 		while True :
